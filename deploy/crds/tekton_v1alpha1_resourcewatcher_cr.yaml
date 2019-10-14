@@ -1,0 +1,7 @@
+apiVersion: tekton.dev/v1alpha1
+kind: ResourceWatcher
+metadata:
+  name: example-resourcewatcher
+spec:
+  # Add fields here
+  size: 3

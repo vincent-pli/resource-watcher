@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: resource-watcher
+  template:
+    metadata:
+      labels:
+        name: resource-watcher
+    spec:
+      serviceAccountName: resource-watcher
+      containers:
+        - name: resource-watcher
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - resource-watcher
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "resource-watcher"
