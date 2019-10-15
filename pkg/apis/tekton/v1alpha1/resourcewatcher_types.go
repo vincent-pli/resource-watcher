@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -13,6 +14,15 @@ type ResourceWatcherSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// Resources is the list of resources to watch
+	Resources []ApiServerResource `json:"resources"`
+	// ServiceAccountName is the name of the ServiceAccount to use to run this
+	// source.
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// Sink is a reference to an object that will resolve to a domain name to use as the sink.
+	// +optional
+	Sink *corev1.ObjectReference `json:"sink,omitempty"`
 }
 
 // ResourceWatcherStatus defines the observed state of ResourceWatcher
@@ -21,6 +31,9 @@ type ResourceWatcherStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// SinkURI is the current active sink URI that has been configured for the ApiServerSource.
+	// +optional
+	SinkURI string `json:"sinkUri,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -47,4 +60,25 @@ type ResourceWatcherList struct {
 
 func init() {
 	SchemeBuilder.Register(&ResourceWatcher{}, &ResourceWatcherList{})
+}
+
+// ApiServerResource defines the resource to watch
+type ApiServerResource struct {
+	// API version of the resource to watch.
+	APIVersion string `json:"apiVersion"`
+
+	// Kind of the resource to watch.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+	Kind string `json:"kind"`
+
+	// LabelSelector restricts this source to objects with the selected labels
+	// More info: http://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+	LabelSelector metav1.LabelSelector `json:"labelSelector"`
+
+	// ControllerSelector restricts this source to objects with a controlling owner reference of the specified kind.
+	// Only apiVersion and kind are used. Both are optional.
+	ControllerSelector metav1.OwnerReference `json:"controllerSelector"`
+
+	// If true, send an event referencing the object controlling the resource
+	Controller bool `json:"controller"`
 }

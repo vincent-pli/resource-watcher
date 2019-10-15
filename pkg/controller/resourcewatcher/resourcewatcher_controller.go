@@ -2,11 +2,14 @@ package resourcewatcher
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	tektonv1alpha1 "github.com/vincent-pli/resource-watcher/pkg/apis/tekton/v1alpha1"
+	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,9 +20,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	resources "github.com/vincent-pli/resource-watcher/pkg/controller/resourcewatcher/resources"
 )
 
 var log = logf.Log.WithName("controller_resourcewatcher")
+
+const (
+	watcherImageEnvVar = "WATCH_IMAGE"
+)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -34,7 +43,17 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileResourceWatcher{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	watcherImage, defined := os.LookupEnv(watcherImageEnvVar)
+	if !defined {
+		err := fmt.Errorf("No environment variable found")
+		log.Error(err, "required environment variable %q not defined", watcherImageEnvVar)
+		return nil
+	}
+	return &ReconcileResourceWatcher{
+		client:       mgr.GetClient(),
+		scheme:       mgr.GetScheme(),
+		watcherImage: watcherImage,
+	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -71,8 +90,9 @@ var _ reconcile.Reconciler = &ReconcileResourceWatcher{}
 type ReconcileResourceWatcher struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client       client.Client
+	scheme       *runtime.Scheme
+	watcherImage string
 }
 
 // Reconcile reads that state of the cluster for a ResourceWatcher object and makes changes based on the state read
@@ -100,20 +120,42 @@ func (r *ReconcileResourceWatcher) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	// Define a new Rolebinding object
+	rolebinding, err := resources.MakeRolebinding(instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	// Set JobFlow instance as the owner and controller
+	if err := controllerutil.SetControllerReference(instance, rolebinding, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// Check if this Rolebinding already exists
+	foundRolebinding := &rbacv1.ClusterRoleBinding{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: rolebinding.Name, Namespace: rolebinding.Namespace}, foundRolebinding)
+	if err != nil && errors.IsNotFound(err) {
+		reqLogger.Info("Creating a new Rolebinding", "Rolebinding.Namespace", rolebinding.Namespace, "Rolebinding.Name", rolebinding.Name)
+		err = r.client.Create(context.TODO(), rolebinding)
+		if err != nil {
+			reqLogger.Error(err, "Create Rolebinding raise exception.")
+			return reconcile.Result{}, err
+		}
+	}
+
 	// Define a new Pod object
-	pod := newPodForCR(instance)
+	deploy := resources.MakeWatchDeploy(instance, r.watcherImage)
 
 	// Set ResourceWatcher instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(instance, deploy, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	found := &v1.Deployment{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: deploy.Name, Namespace: deploy.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
+		reqLogger.Info("Creating a new Pod", "Deployment.Namespace", deploy.Namespace, "Deployment.Name", deploy.Name)
+		err = r.client.Create(context.TODO(), deploy)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -127,27 +169,4 @@ func (r *ReconcileResourceWatcher) Reconcile(request reconcile.Request) (reconci
 	// Pod already exists - don't requeue
 	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
-}
-
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *tektonv1alpha1.ResourceWatcher) *corev1.Pod {
-	labels := map[string]string{
-		"app": cr.Name,
-	}
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
-			Namespace: cr.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
-	}
 }

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: resource-watcher
+  namespace: tekton-sources
 spec:
   replicas: 1
   selector:
@@ -16,7 +17,7 @@ spec:
       containers:
         - name: resource-watcher
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: github.com/vincent-pli/resource-watcher/cmd/manager
           command:
           - resource-watcher
           imagePullPolicy: Always
@@ -31,3 +32,5 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "resource-watcher"
+            - name: WATCH_IMAGE
+              value: github.com/vincent-pli/resource-watcher/cmd/watcher

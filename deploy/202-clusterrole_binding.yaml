@@ -5,7 +5,8 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: resource-watcher
+  namespace: tekton-sources
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: resource-watcher
   apiGroup: rbac.authorization.k8s.io
