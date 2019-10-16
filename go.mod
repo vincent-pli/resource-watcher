@@ -1,6 +1,7 @@
 module github.com/vincent-pli/resource-watcher
 
 require (
+	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.0
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/spf13/pflag v1.0.3
