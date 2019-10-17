@@ -81,4 +81,7 @@ type ApiServerResource struct {
 
 	// If true, send an event referencing the object controlling the resource
 	Controller bool `json:"controller"`
+
+	// NameSelector is the list of resource name watched
+	NameSelector []string `json:"nameSelector"`
 }

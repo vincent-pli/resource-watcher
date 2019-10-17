@@ -14,6 +14,11 @@ func (in *ApiServerResource) DeepCopyInto(out *ApiServerResource) {
 	*out = *in
 	in.LabelSelector.DeepCopyInto(&out.LabelSelector)
 	in.ControllerSelector.DeepCopyInto(&out.ControllerSelector)
+	if in.NameSelector != nil {
+		in, out := &in.NameSelector, &out.NameSelector
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

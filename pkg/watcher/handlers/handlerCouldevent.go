@@ -1,23 +1,30 @@
 package handlers
 
 import (
+	cloudevents "github.com/cloudevents/sdk-go"
+	"github.com/go-logr/logr"
 	"k8s.io/client-go/tools/cache"
 )
 
-type couldeventHandler struct {
-	resource []string
+type CouldeventHandler struct {
+	Resource []string
+	Client   cloudevents.Client
+	Sink     string
+	Log      logr.Logger
 }
 
-var _ cache.ResourceEventHandler = (*couldeventHandler)(nil)
+var _ cache.ResourceEventHandler = (*CouldeventHandler)(nil)
 
-func (c *couldeventHandler) OnAdd(obj interface{}) {
-
-}
-
-func (c *couldeventHandler) OnUpdate(oldObj, newObj interface{}) {
+func (c *CouldeventHandler) OnAdd(obj interface{}) {
+	c.Log.Info("resource added")
 
 }
 
-func (c *couldeventHandler) OnDelete(obj interface{}) {
+func (c *CouldeventHandler) OnUpdate(oldObj, newObj interface{}) {
+	c.Log.Info("resource update")
 
+}
+
+func (c *CouldeventHandler) OnDelete(obj interface{}) {
+	c.Log.Info("resource delete")
 }

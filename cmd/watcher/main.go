@@ -77,4 +77,6 @@ func main() {
 		Cache:       cache,
 	}
 
+	watcher.Start()
+
 }
