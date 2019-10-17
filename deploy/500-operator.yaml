@@ -18,8 +18,6 @@ spec:
         - name: resource-watcher
           # Replace this with the built image name
           image: github.com/vincent-pli/resource-watcher/cmd/manager
-          command:
-          - resource-watcher
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

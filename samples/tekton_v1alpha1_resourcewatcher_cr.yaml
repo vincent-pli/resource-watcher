@@ -3,5 +3,12 @@ kind: ResourceWatcher
 metadata:
   name: example-resourcewatcher
 spec:
-  # Add fields here
-  size: 3
+  serviceAccountName: "default"
+  sink:
+    apiVersion: serving.knative.dev/v1alpha1
+    kind: Service
+    name: event-display
+  resources:
+    - apiVersion: v1
+      kind: Pod
+  
