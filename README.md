@@ -1,6 +1,6 @@
 # Resource-watcher
 
-The project is used for watch on resources of k8s,
+The project is used for watching on resources of k8s,
 when anything changed on the watched resource (add, update, delete) will take action:
 - Send `Cloudevent` to specific `url`
 - Create k8s event
