@@ -2,6 +2,7 @@ apiVersion: tekton.dev/v1alpha1
 kind: ResourceWatcher
 metadata:
   name: example-resourcewatcher
+  namespace: tekton-sources
 spec:
   serviceAccountName: "default"
   sink:

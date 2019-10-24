@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
 const (
@@ -41,6 +42,10 @@ var (
 )
 
 func main() {
+	// start watcher on TriggerBinding and TriggerTemplate
+	// set up signals so we handle the first shutdown signal gracefully
+	stopCh := signals.SetupSignalHandler()
+
 	rwName, defined := os.LookupEnv(name)
 	if !defined {
 		err := fmt.Errorf("No environment variable found")
@@ -69,7 +74,7 @@ func main() {
 		Mapper: nil,
 	})
 
-	watcher := watcher.Watcher{
+	watchers := watcher.Watcher{
 		K8sClient:   client,
 		SwName:      rwName,
 		SwNamespace: rwNamespace,
@@ -77,6 +82,10 @@ func main() {
 		Cache:       cache,
 	}
 
-	watcher.Start()
+	err = watchers.Start(stopCh)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
 
 }

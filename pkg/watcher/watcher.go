@@ -27,7 +27,7 @@ type Watcher struct {
 	Cache       cache.Cache
 }
 
-func (w *Watcher) Init() error {
+func (w Watcher) Start(stopCh <-chan struct{}) error {
 	instance := &tektonv1alpha1.ResourceWatcher{}
 	nameNamespace := types.NamespacedName{
 		Name:      w.SwName,
@@ -40,10 +40,6 @@ func (w *Watcher) Init() error {
 	}
 	w.Instance = instance
 
-	return nil
-}
-
-func (w *Watcher) Start() error {
 	// prepare eventHandler, could be couldevent or k8sevent
 	sink, err := w.getSinkURI(w.Instance.Spec.Sink, w.Instance.Namespace)
 	if err != nil {
@@ -81,12 +77,14 @@ func (w *Watcher) Start() error {
 		informer.AddEventHandler(couldEventHandler)
 
 	}
+	w.Cache.Start(stopCh)
+
 	return nil
 }
 
 // GetSinkURI retrieves the sink URI from the object referenced by the given
 // ObjectReference.
-func (w *Watcher) getSinkURI(sink *corev1.ObjectReference, namespace string) (string, error) {
+func (w Watcher) getSinkURI(sink *corev1.ObjectReference, namespace string) (string, error) {
 	if sink == nil {
 		return "", fmt.Errorf("sink ref is nil")
 	}

@@ -59,3 +59,18 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - eventing.knative.dev
+  resources:
+  - channels
+  - services
+  verbs:
+  - '*'
+
+- apiGroups:
+  - serving.knative.dev
+  resources:
+  - services
+  - routes
+  verbs:
+  - '*'
