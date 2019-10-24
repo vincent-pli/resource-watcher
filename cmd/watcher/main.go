@@ -71,10 +71,7 @@ func main() {
 		log.Error(err, "exception raised when create client")
 		os.Exit(1)
 	}
-	cache, err := cache.New(ctrl.GetConfigOrDie(), cache.Options{
-		Scheme: scheme,
-		Mapper: nil,
-	})
+	cache, err := cache.New(ctrl.GetConfigOrDie(), cache.Options{})
 
 	watchers := watcher.Watcher{
 		K8sClient:   client,

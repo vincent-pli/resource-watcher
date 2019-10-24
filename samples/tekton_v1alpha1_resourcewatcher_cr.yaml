@@ -9,6 +9,7 @@ spec:
     apiVersion: serving.knative.dev/v1alpha1
     kind: Service
     name: event-display
+    namespace: default
   resources:
     - apiVersion: v1
       kind: Pod
