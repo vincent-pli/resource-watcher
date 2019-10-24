@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/vincent-pli/resource-watcher/pkg/apis"
 	watcher "github.com/vincent-pli/resource-watcher/pkg/watcher"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,6 +46,7 @@ func main() {
 	// start watcher on TriggerBinding and TriggerTemplate
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
+	logf.SetLogger(zap.Logger())
 
 	rwName, defined := os.LookupEnv(name)
 	if !defined {
