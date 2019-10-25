@@ -25,7 +25,6 @@ import (
 	watcher "github.com/vincent-pli/resource-watcher/pkg/watcher"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -71,14 +70,12 @@ func main() {
 		log.Error(err, "exception raised when create client")
 		os.Exit(1)
 	}
-	cache, err := cache.New(ctrl.GetConfigOrDie(), cache.Options{})
 
 	watchers := watcher.Watcher{
 		K8sClient:   client,
 		SwName:      rwName,
 		SwNamespace: rwNamespace,
 		Log:         log,
-		Cache:       cache,
 	}
 
 	err = watchers.Start(stopCh)

@@ -11,6 +11,7 @@ import (
 // ResourceWatcherSpec defines the desired state of ResourceWatcher
 // +k8s:openapi-gen=true
 type ResourceWatcherSpec struct {
+	Namespaces []string `json:"namespaces"`
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html

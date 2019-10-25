@@ -14,6 +14,7 @@ import (
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/apis/duck"
 	v1beta1 "knative.dev/pkg/apis/duck/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -28,6 +29,7 @@ type Watcher struct {
 }
 
 func (w Watcher) Start(stopCh <-chan struct{}) error {
+	// get ResourceWatcher cr
 	instance := &tektonv1alpha1.ResourceWatcher{}
 	nameNamespace := types.NamespacedName{
 		Name:      w.SwName,
@@ -39,6 +41,19 @@ func (w Watcher) Start(stopCh <-chan struct{}) error {
 		return err
 	}
 	w.Instance = instance
+
+	// create cache
+	namespaces := []string{}
+	for _, namespace := range instance.Spec.Namespaces {
+		namespaces = append(namespaces, namespace)
+	}
+	cache, err := cache.MultiNamespacedCacheBuilder(namespaces)(ctrl.GetConfigOrDie(), cache.Options{})
+	if err != nil {
+		w.Log.Error(err, "create cache raise exception")
+		return err
+	}
+	w.Cache = cache
+	w.Log.Info("Create cache watch on: ", "namespaces", namespaces)
 
 	// prepare eventHandler, could be couldevent or k8sevent
 	sink, err := w.getSinkURI(w.Instance.Spec.Sink, w.Instance.Namespace)
