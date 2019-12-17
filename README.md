@@ -28,3 +28,6 @@ The project implements `Controller/reconciler` based on `operator-sdk` and enhan
 2. ko apply -f ./deploy
 3. kubectl apply -f ./samples/tekton_v1alpha1_resourcewatcher_cr.yaml
 
+------
+
+
