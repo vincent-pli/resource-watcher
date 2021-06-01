@@ -17,7 +17,7 @@ spec:
       containers:
         - name: resource-watcher
           # Replace this with the built image name
-          image: github.com/vincent-pli/resource-watcher/cmd/manager
+          image: ko://github.com/vincent-pli/resource-watcher/cmd/manager
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -31,4 +31,4 @@ spec:
             - name: OPERATOR_NAME
               value: "resource-watcher"
             - name: WATCH_IMAGE
-              value: github.com/vincent-pli/resource-watcher/cmd/watcher
+              value: ko://github.com/vincent-pli/resource-watcher/cmd/watcher

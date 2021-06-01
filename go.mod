@@ -15,6 +15,7 @@ require (
 	knative.dev/eventing v0.9.0
 	knative.dev/pkg v0.0.0-20191016060315-3f11504864ae
 	sigs.k8s.io/controller-runtime v0.2.0
+	github.com/Azure/go-autorest v12.2.0+incompatible
 )
 
 // Pinned to kubernetes-1.13.4
@@ -36,6 +37,6 @@ replace (
 
 replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
 
-require github.com/Azure/go-autorest v12.2.0+incompatible
+replace bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 
 go 1.13
