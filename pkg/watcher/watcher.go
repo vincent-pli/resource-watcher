@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	tektonv1alpha1 "github.com/vincent-pli/resource-watcher/pkg/apis/tekton/v1alpha1"
@@ -11,24 +12,29 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/apis/duck"
 	v1beta1 "knative.dev/pkg/apis/duck/v1beta1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Watcher struct {
-	K8sClient   client.Client
-	SwName      string
-	SwNamespace string
-	Instance    *tektonv1alpha1.ResourceWatcher
-	Log         logr.Logger
-	Cache       cache.Cache
+	DiscoveryClient *discovery.DiscoveryClient
+	DynamicClient   dynamic.Interface
+	K8sClient       client.Client
+	SwName          string
+	SwNamespace     string
+	Instance        *tektonv1alpha1.ResourceWatcher
+	Log             logr.Logger
+	Cache           cache.Cache
 }
 
-func (w Watcher) Start(stopCh <-chan struct{}) error {
+func (w Watcher) Start(stopCh <-chan struct{}) {
+	fmt.Println("111111111")
 	// get ResourceWatcher cr
 	instance := &tektonv1alpha1.ResourceWatcher{}
 	nameNamespace := types.NamespacedName{
@@ -38,50 +44,73 @@ func (w Watcher) Start(stopCh <-chan struct{}) error {
 
 	err := w.K8sClient.Get(context.TODO(), nameNamespace, instance)
 	if err != nil {
-		return err
+		w.Log.Error(err, "get sink raise exception")
 	}
 	w.Instance = instance
-
+	fmt.Println("222222")
 	// create cache
 	namespaces := []string{}
 	for _, namespace := range instance.Spec.Namespaces {
 		namespaces = append(namespaces, namespace)
 	}
-	cache, err := cache.MultiNamespacedCacheBuilder(namespaces)(ctrl.GetConfigOrDie(), cache.Options{})
-	if err != nil {
-		w.Log.Error(err, "create cache raise exception")
-		return err
-	}
-	w.Cache = cache
-	w.Log.Info("Create cache watch on: ", "namespaces", namespaces)
+	// cache, err := cache.MultiNamespacedCacheBuilder(namespaces)(ctrl.GetConfigOrDie(), cache.Options{})
+	// if err != nil {
+	// 	w.Log.Error(err, "create cache raise exception")
+	// 	return err
+	// }
+	// w.Cache = cache
+	// w.Log.Info("Create cache watch on: ", "namespaces", namespaces)
 
+	informerFactory := dynamicinformer.NewDynamicSharedInformerFactory(w.DynamicClient, 0)
+	fmt.Println("333333")
 	// prepare eventHandler, could be couldevent or k8sevent
 	sink, err := w.getSinkURI(w.Instance.Spec.Sink, w.Instance.Namespace)
 	if err != nil {
 		w.Log.Error(err, "get sink raise exception")
-		return err
 	}
 
 	eventsClient, err := kncloudevents.NewDefaultClient(sink)
 	if err != nil {
 		w.Log.Error(err, "creat cloudevent client raise exception")
-		return err
 	}
-
+	fmt.Println("444444")
 	for _, resource := range w.Instance.Spec.Resources {
+		fmt.Println("55555")
 		kind := resource.Kind
+		var resourceStr string
+
 		gv, err := schema.ParseGroupVersion(resource.APIVersion)
 		if err != nil {
 			w.Log.Error(err, "error parsing APIVersion")
 			continue
 		}
+		fmt.Println("666666")
+		// gvk := schema.GroupVersionKind{Kind: kind, Group: gv.Group, Version: gv.Version}
 
-		gvk := schema.GroupVersionKind{Kind: kind, Group: gv.Group, Version: gv.Version}
-		informer, err := w.Cache.GetInformerForKind(gvk)
+		preferredResources, err := w.DiscoveryClient.ServerResourcesForGroupVersion(gv.String())
 		if err != nil {
-			w.Log.Error(err, "cannot get informer by gvk")
-			continue
+			if discovery.IsGroupDiscoveryFailedError(err) {
+				// w.Log.Warningf("failed to discover some groups: %v", err.(*discovery.ErrGroupDiscoveryFailed).Groups)
+				fmt.Println("failed to discover some groups")
+			} else {
+				// w.Log.Warningf("failed to discover preferred resources: %v", err)
+				fmt.Println("failed to discover preferred resources")
+			}
 		}
+		fmt.Println("777777")
+		for _, r := range preferredResources.APIResources {
+			if r.Kind == kind && strings.Index(r.Name, "status") == -1 {
+				resourceStr = r.Name
+			}
+		}
+
+		gvr := schema.GroupVersionResource{Resource: resourceStr, Group: gv.Group, Version: gv.Version}
+		fmt.Println("8888888")
+		// informer, err := w.Cache.GetInformerForKind(gvk)
+		// if err != nil {
+		// 	w.Log.Error(err, "cannot get informer by gvk")
+		// 	continue
+		// }
 
 		couldEventHandler := &handler.CouldeventHandler{
 			Resource: resource.NameSelector,
@@ -89,12 +118,15 @@ func (w Watcher) Start(stopCh <-chan struct{}) error {
 			Sink:     sink,
 			Log:      w.Log,
 		}
-		informer.AddEventHandler(couldEventHandler)
+		// informer.AddEventHandler(couldEventHandler)
+		informerFactory.ForResource(gvr).Informer().AddEventHandler(couldEventHandler)
+
+		fmt.Println("999999")
+		fmt.Println(gvr.String())
 
 	}
-	w.Cache.Start(stopCh)
-
-	return nil
+	informerFactory.Start(stopCh)
+	<-stopCh
 }
 
 // GetSinkURI retrieves the sink URI from the object referenced by the given

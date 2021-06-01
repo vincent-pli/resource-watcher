@@ -24,6 +24,8 @@ import (
 	"github.com/vincent-pli/resource-watcher/pkg/apis"
 	watcher "github.com/vincent-pli/resource-watcher/pkg/watcher"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -71,17 +73,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	dynamicClientSet := dynamic.NewForConfigOrDie(ctrl.GetConfigOrDie())
+	discoverClientSet := discovery.NewDiscoveryClientForConfigOrDie(ctrl.GetConfigOrDie())
 	watchers := watcher.Watcher{
-		K8sClient:   client,
-		SwName:      rwName,
-		SwNamespace: rwNamespace,
-		Log:         log,
+		DiscoveryClient: discoverClientSet,
+		DynamicClient:   dynamicClientSet,
+		K8sClient:       client,
+		SwName:          rwName,
+		SwNamespace:     rwNamespace,
+		Log:             log,
 	}
 
-	err = watchers.Start(stopCh)
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
+	watchers.Start(stopCh)
 }
