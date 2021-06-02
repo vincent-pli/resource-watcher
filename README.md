@@ -27,4 +27,6 @@ The project implements `Controller/reconciler` based on `operator-sdk` and enhan
 1. Git clone the repo.
 2. ko apply -f ./deploy
 3. kubectl apply -f ./samples/tekton_v1alpha1_resourcewatcher_cr.yaml
+4. kubectl create -f ./samples/pr.yaml
 
+see if the pod of `knative` is triggered or not
