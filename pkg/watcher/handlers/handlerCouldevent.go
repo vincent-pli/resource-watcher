@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
+	"log"
 
-	cloudevents "github.com/cloudevents/sdk-go"
+	// cloudevents "github.com/cloudevents/sdk-go"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +40,17 @@ func (c *CouldeventHandler) OnAdd(obj interface{}) {
 			"object", obj, "type", fmt.Sprintf("%T", obj))
 		return
 	}
+	event := cloudevents.NewEvent()
+	event.SetSource("example/uri")
+	event.SetType("example.type")
+	event.SetData(cloudevents.ApplicationJSON, map[string]string{"hello": "world"})
+
+	ctx := cloudevents.ContextWithTarget(context.Background(), c.Sink)
+	// Send that Event.
+	if result := c.Client.Send(ctx, event); cloudevents.IsUndelivered(result) {
+		log.Fatalf("failed to send, %v", result)
+	}
+
 	c.Log.Info("resource added %v", obj)
 }
 

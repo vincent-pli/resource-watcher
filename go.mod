@@ -3,7 +3,8 @@ module github.com/vincent-pli/resource-watcher
 require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.12.7 // indirect
 	contrib.go.opencensus.io/exporter/zipkin v0.1.1 // indirect
-	github.com/cloudevents/sdk-go v0.9.2
+	github.com/cloudevents/sdk-go v0.9.2 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.4.1
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.0
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
@@ -39,4 +40,4 @@ replace github.com/operator-framework/operator-sdk => github.com/operator-framew
 
 replace bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 
-go 1.13
+go 1.16
