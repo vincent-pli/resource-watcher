@@ -6,11 +6,13 @@ metadata:
 spec:
   serviceAccountName: "default"
   sink:
-    apiVersion: serving.knative.dev/v1alpha1
+    apiVersion: serving.knative.dev/v1
     kind: Service
-    name: event-display
+    name: helloworld-go
     namespace: default
   resources:
-    - apiVersion: v1
-      kind: Pod
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+  namespaces:
+    - tekton-sources
   
