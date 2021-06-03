@@ -5,9 +5,28 @@ metadata:
   namespace: default
 spec:
   template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        name: knative-operator
     spec:
+      serviceAccountName: knative-operator
       containers:
-      - image: docker.io/vincentpli/helloworld-go
-        env:
-        - name: TARGET
-          value: "Go Sample v1"
+        - image: docker.io/savita3020/servingcontainer
+          ports:
+            - containerPort: 8881
+        - name: knative-operator
+          image: gcr.io/knative-releases/knative.dev/operator/cmd/operator@sha256:7debfa4d2ebc0ea53463f2d0f5e0144a9ed0a8f60c54fd98bec1835906aa59f3
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAME
+              value: "helloworld-go"
+            - name: SYSTEM_NAMESPACE
+              value: "default"
+            - name: METRICS_DOMAIN
+              value: knative.dev/operator
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
