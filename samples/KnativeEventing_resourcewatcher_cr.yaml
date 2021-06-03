@@ -11,8 +11,8 @@ spec:
     name: helloworld-go
     namespace: default
   resources:
-    - apiVersion: tekton.dev/v1beta1
-      kind: PipelineRun
+    - apiVersion: operator.knative.dev/v1alpha1
+      kind: KnativeEventing
   namespaces:
     - tekton-sources
   

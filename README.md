@@ -26,12 +26,49 @@ The project implements `Controller/reconciler` based on `operator-sdk` and enhan
 # Installation
 1. Git clone the repo.
 2. Deploy `resource-watcher`:
-   ko apply -f ./deploy
-4. Create a `knative` `ksvc` instance:
-   kubectl create -f ./samples/hello-world.yaml
-5. Watching `tekton`'s `pipelinerun`: 
-   kubectl apply -f ./samples/tekton_v1alpha1_resourcewatcher_cr.yaml
-7. Create a `pipelinerun`:
-   kubectl create -f ./samples/pr.yaml
 
-See if the pod of `knative` is triggered or not
+   `ko apply -f ./deploy`
+
+   Check if installation succeed by:
+   ```
+   [root@symtest11 resource-watcher]# kubectl -n tekton-sources get po
+   resource-watcher-6bc7c54c65-ctjjq                          1/1     Running   0          28h
+   ```
+3. Deploy the `operator` of `knative`: [knative-operator](https://github.com/knative/operator)
+   or
+
+   `kubectl apply ./samples/knative-operator.yaml`
+
+   For demo, we need delete the `deployment` of `knative-operator` since we will wrapper the `deployment` as a `ksvc`.
+
+   `kubectl delete deployment knative-operator`.  
+
+
+4. Create a `ksvc` who is actually the `deployment` we deleted previously
+
+   `kubectl create -f ./samples/knative-operator-wrapper.yaml`
+
+   **Note:** we modify the original `deployment`:
+   - Add an extra `container` to supply a `container port` for `knative serving` to proxy the request.
+   - Delete original `container port`: 9090 which is for metrics collect, since the 9090 is a internal port  for `knative`
+   - Modify the `valueFrom` in the `env` defination to static string.
+
+   The `ksvc`'s pod will disppear afterr 60 second by default.   
+   
+
+5. Watching `knative-operator`'s `KnativeEventing`: 
+
+   `kubectl apply -f ./samples/KnativeEventing_resourcewatcher_cr.yaml`
+
+   Then check this:
+   ```
+   [root@symtest11 resource-watcher]# kubectl -n tekton-sources get po
+   NAME                                                       READY   STATUS    RESTARTS   AGE
+   example-resourcewatcher-deploymenthgcfg-6fb66479bb-wgbbd   1/1     Running   0          11h
+   resource-watcher-6bc7c54c65-ctjjq                          1/1     Running   0          28h
+   ```
+7. Create a `KnativeEventing`:
+
+   `kubectl create -f ./samples/eventing.yaml`
+
+Then you could see the `ksvc`(a wrapper `knative-operator`)'s pod will start up and then the `knative-eventing` will be installed.
