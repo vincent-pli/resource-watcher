@@ -74,6 +74,14 @@ rules:
   - routes
   verbs:
   - '*'
+
+- apiGroups:
+  - operator.knative.dev
+  resources:
+  - knativeeventings
+  - knativeservings
+  verbs:
+  - '*'
   
 - apiGroups:
   - rbac.authorization.k8s.io
