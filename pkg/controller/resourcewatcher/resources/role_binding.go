@@ -28,6 +28,10 @@ const (
 	ClusterRoleName    = "resource-watcher"
 )
 
+func GetRolebindingName(instance *sourcesv1alpha1.ResourceWatcher) string {
+	return fmt.Sprintf("%s%s", instance.Name, RoleBindingPostfix)
+}
+
 func MakeRolebinding(instance *sourcesv1alpha1.ResourceWatcher) (*rbacv1.ClusterRoleBinding, error) {
 	roleBindingName := fmt.Sprintf("%s%s", instance.Name, RoleBindingPostfix)
 	labels := map[string]string{

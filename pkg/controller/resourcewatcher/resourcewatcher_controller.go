@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	resources "github.com/vincent-pli/resource-watcher/pkg/controller/resourcewatcher/resources"
@@ -28,6 +28,7 @@ var log = logf.Log.WithName("controller_resourcewatcher")
 
 const (
 	watcherImageEnvVar = "WATCH_IMAGE"
+	finalizerName      = "resourcewatchers.tekton.dev/finalizer"
 )
 
 /**
@@ -120,6 +121,38 @@ func (r *ReconcileResourceWatcher) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	// examine DeletionTimestamp to determine if object is under deletion
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// registering our finalizer.
+		if !containsString(instance.GetFinalizers(), finalizerName) {
+			addFinalizer(instance, finalizerName)
+			if err := r.client.Update(context.TODO(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if containsString(instance.GetFinalizers(), finalizerName) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.removeClusterrolebinding(instance); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return reconcile.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			removeFinalizer(instance, finalizerName)
+			if err := r.client.Update(context.TODO(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		// Stop reconciliation as the item is being deleted
+		return reconcile.Result{}, nil
+	}
+
 	// Define a new Rolebinding object
 	rolebinding, err := resources.MakeRolebinding(instance)
 	if err != nil {
@@ -169,4 +202,64 @@ func (r *ReconcileResourceWatcher) Reconcile(request reconcile.Request) (reconci
 	// Pod already exists - don't requeue
 	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileResourceWatcher) removeClusterrolebinding(o *tektonv1alpha1.ResourceWatcher) error {
+	name := resources.GetRolebindingName(o)
+
+	// Check if this Rolebinding already exists
+	foundRolebinding := &rbacv1.ClusterRoleBinding{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ""}, foundRolebinding)
+	if err == nil {
+		err = r.client.Delete(context.TODO(), foundRolebinding)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Helper functions to check and remove string from a slice of strings.
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
+}
+
+// AddFinalizer accepts an Object and adds the provided finalizer if not present.
+func addFinalizer(o *tektonv1alpha1.ResourceWatcher, finalizer string) {
+	f := o.GetFinalizers()
+	for _, e := range f {
+		if e == finalizer {
+			return
+		}
+	}
+	o.SetFinalizers(append(f, finalizer))
+}
+
+// RemoveFinalizer accepts an Object and removes the provided finalizer if present.
+func removeFinalizer(o *tektonv1alpha1.ResourceWatcher, finalizer string) {
+	f := o.GetFinalizers()
+	for i := 0; i < len(f); i++ {
+		if f[i] == finalizer {
+			f = append(f[:i], f[i+1:]...)
+			i--
+		}
+	}
+	o.SetFinalizers(f)
 }
