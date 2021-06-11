@@ -8,7 +8,7 @@ spec:
   sink:
     apiVersion: serving.knative.dev/v1
     kind: Service
-    name: helloworld-go
+    name: knative-operator
     namespace: default
   resources:
     - apiVersion: operator.knative.dev/v1alpha1
