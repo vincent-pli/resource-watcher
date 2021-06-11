@@ -23,6 +23,44 @@ It's k8s native and implements by a k8s controller.
 # Details
 The project implements `Controller/reconciler` based on `operator-sdk` and enhance it to use `ko` as build/deploy tool.
 
+# Basic idea
+### Wrapper Operator to KSVC
+![wrapper typical operator to KSVC](./images/wrapper_operator.png "wrapper")
+
+### Whole process
+![wrapper typical operator to KSVC](./images/process.png "wrapper")
+1. Create CR: `ResourceWatcher`
+```
+apiVersion: tekton.dev/v1alpha1
+kind: ResourceWatcher
+metadata:
+  name: example-resourcewatcher
+  namespace: tekton-sources
+spec:
+  serviceAccountName: "default"
+  sink:
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    name: helloworld-go
+    namespace: default
+  resources:
+    - apiVersion: operator.knative.dev/v1alpha1
+      kind: KnativeEventing
+  namespaces:
+    - tekton-sources
+```
+means we will watch a specific CR: `KnativeEventing`, when creation occurred, a `cloudevent` will be send to `slink`(this is the wrapper of Operator):
+```
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    name: helloworld-go
+    namespace: default
+```
+then the pod of the `KSVC` will be scale from 0 to 1
+
+2. When `ResourceWatcher` created, a `pod` will be created to do the real work.
+3. When target CR is appeared(`KnativeEventing`), 
+4. the worker pod will send `cloudenv` to `KSVC`(remember it's actually a wrapper of Operator)
 # Installation
 1. Git clone the repo.
 2. Deploy `resource-watcher`:
