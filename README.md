@@ -27,6 +27,8 @@ The `action` should be pluginable, user could implements what they want, for exa
 
 It's k8s native and implements by a k8s controller. In this demo, the trigger action will be scale-in and scale-out the operators.
 
+[An issue](https://github.com/knative/serving/issues/11423) for knative is opened to discuss if Knative has any plan to manage native Kubernetes resources.
+
 ## Development Prerequisites
 1. [`go`](https://golang.org/doc/install): The language Tektoncd-pipeline-operator is
    built in
