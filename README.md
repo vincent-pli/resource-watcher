@@ -153,7 +153,7 @@ resource-watcher-6bc7c54c65-ctjjq                          1/1     Running   0  
 7. Create a `KnativeEventing`:
 
 ```console
-kubectl create -f ./samples/eventing.yaml
+kubectl create -f ./samples/eventing.yaml -n knative-eventing
 ```
 
 Then you could see the `ksvc`(a wrapper `knative-operator`)'s pod will start up and then the `knative-eventing` will be installed.
