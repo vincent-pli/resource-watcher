@@ -60,7 +60,7 @@ spec:
   sink:
     apiVersion: serving.knative.dev/v1
     kind: Service
-    name: helloworld-go
+    name: knative-operator
     namespace: default
   resources:
     - apiVersion: operator.knative.dev/v1alpha1
@@ -72,7 +72,7 @@ means we will watch a specific CR: `KnativeEventing`, when creation occurred, a 
 ```yaml
     apiVersion: serving.knative.dev/v1
     kind: Service
-    name: helloworld-go
+    name: knative-operator
     namespace: default
 ```
 then the pod of the `KSVC` will be scale from 0 to 1
