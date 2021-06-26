@@ -3,12 +3,15 @@ module github.com/vincent-pli/resource-watcher
 require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.12.7 // indirect
 	contrib.go.opencensus.io/exporter/zipkin v0.1.1 // indirect
+	github.com/Azure/go-autorest v12.2.0+incompatible
 	github.com/cloudevents/sdk-go v0.9.2 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.4.1
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.0
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/spf13/pflag v1.0.3
+	google.golang.org/grpc v1.22.1 // indirect
+	google.golang.org/protobuf v1.26.0 // indirect
 	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
@@ -16,7 +19,6 @@ require (
 	knative.dev/eventing v0.9.0
 	knative.dev/pkg v0.0.0-20191016060315-3f11504864ae
 	sigs.k8s.io/controller-runtime v0.2.0
-	github.com/Azure/go-autorest v12.2.0+incompatible
 )
 
 // Pinned to kubernetes-1.13.4
