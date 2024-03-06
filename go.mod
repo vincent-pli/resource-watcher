@@ -1,22 +1,28 @@
 module github.com/vincent-pli/resource-watcher
 
 require (
-	contrib.go.opencensus.io/exporter/stackdriver v0.12.7 // indirect
-	contrib.go.opencensus.io/exporter/zipkin v0.1.1 // indirect
-	github.com/cloudevents/sdk-go v0.9.2 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.4.1
+	cloud.google.com/go v0.43.0 // indirect
+	github.com/Azure/go-autorest v12.2.0+incompatible // indirect
+	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
+	github.com/census-instrumentation/opencensus-proto v0.2.1 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.0
+	github.com/gogo/protobuf v1.3.0 // indirect
+	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/spf13/pflag v1.0.3
+	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
+	golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa // indirect
+	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
+	google.golang.org/grpc v1.22.1 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208
-	knative.dev/eventing v0.9.0
 	knative.dev/pkg v0.0.0-20191016060315-3f11504864ae
 	sigs.k8s.io/controller-runtime v0.2.0
-	github.com/Azure/go-autorest v12.2.0+incompatible
 )
 
 // Pinned to kubernetes-1.13.4
